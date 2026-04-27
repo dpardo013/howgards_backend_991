@@ -1,0 +1,49 @@
+name: Primer flujo de trabajo CI/CD (Build, Test and Push Docker Image) para Ampliación de Entornos de Desarrollo
+
+# ===== Permisos del token automático de GitHub para que pueda "subir"(push del paso 4.) la imagen docker generada en el paso 3.
+# ===== La imagen se subirá al área de registro de GitHub ghcr.io/profies/aaee_mapamundi_sb =====
+permissions:
+  contents: read
+  packages: write
+
+# ===== Disparadores del workflow =====
+on:
+  push:
+    branches:
+      - '**' # Cualquier rama 
+
+# ===== Tareas del workflow =====
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    
+      # 1. Descarga código
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. JDK/Maven para tests previos
+      - name: Configución pasar TEST
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 23
+
+      - name: Construir proyecto con Maven
+        run: mvn clean package
+
+      # 3. Construir la imagen Docker usando el Dockerfile
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}:latest .
+
+      # 4. Push a GHCR (GitHub Container Registry)
+      - name: Push Docker image
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        run: docker push ghcr.io/${{ github.repository }}:latest
