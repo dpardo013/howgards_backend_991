@@ -1,0 +1,9 @@
+services:
+  app:
+  image: ghcr.io/profies/aaee_mapamundi_sb:latest
+  container_name: aaee_mapamundi_app_xxx
+  ports:
+    - "8080:8080"
+  env_file:
+    - .env
+  restart: always
